@@ -1,16 +1,33 @@
 import requests
 import json
+import yaml
 
-SONAR_URL = ""
-PROJECT_KEY = ""
-SEVERITIES = ["BLOCKER", "CRITICAL", "MAJOR", "MINOR", "INFO"]  # Puedes ajustar según tus necesidades
-CONTEXT_LINES = 5  # Líneas de contexto antes y después del issue
+def read_settings_from_yml(yml_path):
+    with open(yml_path, 'r') as file:
+        settings = yaml.safe_load(file)
+    return settings
+
+def validate_settings(settings):
+    required_keys = ["sonarqube", "cookies"]
+    for key in required_keys:
+        if key not in settings:
+            raise ValueError(f"Missing required setting: {key}")
+
+
+settings = read_settings_from_yml("settings.yml")
+validate_settings(settings)
+
+SONAR_URL = settings["sonarqube"]["server-url"]
+PROJECT_KEY = settings["sonarqube"]["project-key"]
+SEVERITIES = settings["sonarqube"]["severity"]
+CONTEXT_LINES = settings["sonarqube"]["context-lines"]
+IMPACT_SOFTWARE_QUALITIES = settings["sonarqube"]["impact"]["software-qualities"]
+IMPACT_SEVERITIES = settings["sonarqube"]["impact"]["severities"]
 
 cookies = {
-    'JWT-SESSION': '',
-    'XSRF-TOKEN': ''
+    'JWT-SESSION': settings["cookies"]["JWT-SESSION"],
+    'XSRF-TOKEN': settings["cookies"]["XSRF-TOKEN"]
 }
-
 
 # ── Paso 1: Obtener issues ──────────────────────────────────────────────────
 print("Obteniendo issues...")
@@ -18,7 +35,9 @@ issues_response = requests.get(
     f"{SONAR_URL}/api/issues/search",
     params={
         "componentKeys": PROJECT_KEY,
-        "severities": ",".join(SEVERITIES),  # Ej: "BLOCKER,CRITICAL,MAJOR"
+        # "severities": ",".join(SEVERITIES),  # Ej: "BLOCKER,CRITICAL,MAJOR"
+        "impactSeverities": ",".join(IMPACT_SEVERITIES),  # Ej: "CRITICAL,MAJOR"
+        "impactSoftwareQualities": ",".join(IMPACT_SOFTWARE_QUALITIES),  # Ej: "RELIABILITY,SECURITY,VULNERABILITY"
         "ps": 500
     },
     cookies=cookies
