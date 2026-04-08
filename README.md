@@ -1,4 +1,4 @@
-# Generador de FUA
+# Quality Measurement SonarQube Report Analyzer
 
 This project is a tool for analyzing and exporting issues from SonarQube reports. It processes the issues, retrieves relevant code snippets, and generates a detailed JSON report.
 
